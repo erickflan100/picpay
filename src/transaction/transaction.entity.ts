@@ -15,6 +15,6 @@ export class Transaction {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   value: number;
 
-  @Column({ default: 'pending' })
+  @Column({ default: 'completed' })
   status: 'pending' | 'completed' | 'failed';
 }

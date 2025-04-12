@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction } from './transaction.entity';
@@ -22,11 +22,11 @@ export class TransactionService {
     return this.transactionRepository.find();
   }
 
-  async create(transactionData: Partial<Transaction>): Promise<Transaction> {
+  async create(transactionData: { payer: number; payee: number; value: number }): Promise<Transaction> {
     const { payer, payee, value } = transactionData;
   
-    const payerUser = await this.userRepository.findOne({ where: { id: payer?.id ?? 0 }, relations: ['wallet'] });
-    const payeeUser = await this.userRepository.findOne({ where: { id: payee?.id ?? 0 }, relations: ['wallet'] });
+    const payerUser = await this.userRepository.findOne({ where: { id: payer }, relations: ['wallet'] });
+    const payeeUser = await this.userRepository.findOne({ where: { id: payee }, relations: ['wallet'] });
   
     if (!payerUser || !payeeUser) {
       throw new Error('Usuário não encontrado.');
@@ -45,13 +45,40 @@ export class TransactionService {
     }
   
     // Realiza a transação
-    payerUser.wallet.balance -= value;
-    payeeUser.wallet.balance += value;
+    payerUser.wallet.balance = Number(payerUser.wallet.balance) - value;
+    payeeUser.wallet.balance = Number(payeeUser.wallet.balance) + value;
   
     await this.walletRepository.save(payerUser.wallet);
     await this.walletRepository.save(payeeUser.wallet);
-  
-    const transaction = this.transactionRepository.create(transactionData);
+
+    const transaction = this.transactionRepository.create({
+      payer: payerUser,
+      payee: payeeUser,
+      value,
+    });
+
     return this.transactionRepository.save(transaction);
+  }
+
+  async deposit(userId: number, password: string, amount: number): Promise<Wallet> {
+    const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['wallet'] });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+    if (user.password !== password) throw new UnauthorizedException('Senha incorreta');
+    if (amount <= 0) throw new BadRequestException('Valor inválido');
+    
+    user.wallet.balance = Number(user.wallet.balance) + amount;
+
+    return this.walletRepository.save(user.wallet);
+  }
+
+  async withdraw(userId: number, password: string, amount: number): Promise<Wallet> {
+    const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['wallet'] });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+    if (user.password !== password) throw new UnauthorizedException('Senha incorreta');
+    if (amount <= 0 || amount > Number(user.wallet.balance)) throw new BadRequestException('Valor inválido para saque');
+    
+    user.wallet.balance = Number(user.wallet.balance) - amount;
+
+    return this.walletRepository.save(user.wallet);
   }
 }
