@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction } from './transaction.entity';
@@ -7,6 +7,7 @@ import { Wallet } from '../wallet/wallet.entity';
 
 @Injectable()
 export class TransactionService {
+  private readonly logger = new Logger(TransactionService.name);
   constructor(
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
@@ -15,7 +16,7 @@ export class TransactionService {
     private readonly userRepository: Repository<User>,
 
     @InjectRepository(Wallet)
-    private readonly walletRepository: Repository<Wallet>
+    private readonly walletRepository: Repository<Wallet>,
   ) { }
 
   async findAll(): Promise<Transaction[]> {
@@ -23,6 +24,7 @@ export class TransactionService {
   }
 
   async create(transactionData: { payer: number; payee: number; value: number }): Promise<Transaction> {
+    this.logger.log('Criando transaction...');
     const { payer, payee, value } = transactionData;
   
     const payerUser = await this.userRepository.findOne({ where: { id: payer }, relations: ['wallet'] });
@@ -80,5 +82,9 @@ export class TransactionService {
     user.wallet.balance = Number(user.wallet.balance) - amount;
 
     return this.walletRepository.save(user.wallet);
+  }
+
+  handleError(error: Error) {
+    this.logger.error('Erro ao criar a transação', error.stack);
   }
 }

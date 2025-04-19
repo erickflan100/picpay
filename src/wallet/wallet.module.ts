@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Wallet } from './wallet.entity';
 import { WalletService } from './wallet.service';
@@ -10,7 +10,7 @@ import { WalletController } from './wallet.controller';
   imports: [TypeOrmModule.forFeature([Wallet, User]),
     UserModule
   ],
-  providers: [WalletService],
+  providers: [WalletService, Logger],
   controllers: [WalletController],
   exports: [WalletService],
 })
