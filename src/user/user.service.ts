@@ -12,17 +12,18 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) { }
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+  async findAll(): Promise<Partial<User>[]> {
+    const users = await this.userRepository.find();
+    return users.map(({ password, ...rest }) => rest);
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
   }
 
-  async create(userData: Partial<User>): Promise<User> {
+  async create(userData: Partial<User>): Promise<{ message: string }> {
     this.logger.log('Criando usuário...');
-    const salt = await bcrypt.genSalt();
+    const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(userData.password, salt);
     const email = userData.email;
     const cpfCnpj = userData.cpfCnpj;
@@ -40,7 +41,11 @@ export class UserService {
     }
     );
 
-    return this.userRepository.save(user);
+    await this.userRepository.save(user);
+
+    return {
+      message: 'Usuário criado com sucesso!',
+    };
   }
 
   handleError(error: Error) {

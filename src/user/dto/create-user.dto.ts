@@ -17,12 +17,12 @@ export class CreateUserDto {
   @IsEmail({}, { message: 'E-mail inválido.' })
   email: string;
 
-  @ApiProperty({ example: "12345h", description: 'Senha do usuário' })
+  @ApiProperty({ example: "12345H*h", description: 'Senha do usuário' })
   @IsString()
-  @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres.' })
+  @MinLength(8, { message: 'A senha deve ter no mínimo 8 caracteres.' })
   @MaxLength(20, { message: 'A senha deve ter no máximo 20 caracteres.' })
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]/, {
-    message: 'A senha deve conter letras e números.',
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]+$/, {
+    message: 'A senha deve conter pelo menos uma letra maiúscula e minúscula, um número e um caracter especial.',
   })
   password: string;
 

@@ -1,4 +1,3 @@
-// src/data-source.ts
 import { DataSource } from 'typeorm';
 import { User } from './user/user.entity';
 import { Wallet } from './wallet/wallet.entity';
@@ -14,5 +13,5 @@ export const AppDataSource = new DataSource({
   synchronize: false,
   logging: true,
   entities: [User, Wallet, Transaction],
-  migrations: ['dist/migrations/*.js'],
+  migrations: ['src/migrations/*.ts'],
 });
