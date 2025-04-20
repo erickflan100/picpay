@@ -61,7 +61,8 @@ export class UserController {
   })
   @ApiOperation({ summary: 'Realiza a inclusão de um novo usuário' })
   @Post()
-  async create(@Body() userData: CreateUserDto): Promise<{ message: string }> {
-  return this.userService.create(userData);
+  async create(@Body() userData: CreateUserDto) {
+  await this.userService.create(userData)
+  return { message: 'Usuário criado com sucesso!' };
 }
 }
